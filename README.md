@@ -1,32 +1,34 @@
-# ⬡ TronSage — AI-Powered TRON Intelligence Agent
+# ⬡ TronSage — AI 驱动的 TRON 链上智能体
 
-> **🏆 TRON × Bank of AI Hackathon 2025 Submission**  
-> Build period: March 16 – March 31, 2025
+> **🏆 TRON × Bank of AI Hackathon 2025 参赛项目**  
+> 开发周期：2025年3月16日 - 3月31日
 
-[![TRON](https://img.shields.io/badge/Network-TRON%20Mainnet-red?style=flat-square)](https://tron.network)
-[![Bank of AI](https://img.shields.io/badge/Powered%20by-Bank%20of%20AI-cyan?style=flat-square)](https://bankofai.io)
-[![x402](https://img.shields.io/badge/Protocol-x402%20Payment-purple?style=flat-square)](https://bankofai.io)
-[![Next.js](https://img.shields.io/badge/Built%20with-Next.js%2014-black?style=flat-square)](https://nextjs.org)
-[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+[![TRON](https://img.shields.io/badge/网络-TRON%20主网-red?style=flat-square)](https://tron.network)
+[![Bank of AI](https://img.shields.io/badge/驱动-Bank%20of%20AI-cyan?style=flat-square)](https://bankofai.io)
+[![x402](https://img.shields.io/badge/协议-x402%20支付-purple?style=flat-square)](https://bankofai.io)
+[![Next.js](https://img.shields.io/badge/框架-Next.js%2014-black?style=flat-square)](https://nextjs.org)
+[![License](https://img.shields.io/badge/开源协议-MIT-green?style=flat-square)](LICENSE)
+
+**[English README](./README.en.md)** | **中文文档**
 
 ---
 
-## 🚀 Project Overview
+## 🚀 项目介绍
 
-**TronSage** is an AI-powered on-chain intelligence agent for the TRON ecosystem. It combines real-time whale tracking, AI-driven market analysis, DeFi opportunity monitoring, and a prediction market — all with AI services monetized through **Bank of AI's x402 micropayment protocol** supporting both **USDT and USDD** on TRON Mainnet.
+**TronSage** 是一个 AI 驱动的 TRON 链上智能体，集实时鲸鱼追踪、AI 市场分析、DeFi 机会监控和预测市场于一体 — AI 服务通过 **Bank of AI 的 x402 微支付协议**实现商业化，支持 **USDT 和 USDD** 双代币付款。
 
-### Feature Overview
+### 核心功能
 
-| Feature | Description |
-|---------|-------------|
-| 🐋 **Live Whale Tracker** | Real-time USDT/USDD transfers >$100K sourced from TronScan API |
-| 🤖 **AI Analyst** | Kimi AI-powered market analysis, gated by **0.1 USDT/USDD x402 payment** |
-| 💼 **Portfolio Analyzer** | Full TRON wallet on-chain analysis with allocation breakdown |
-| 💎 **DeFi Opportunities** | TRON protocol yield comparison (JustLend, SunSwap, Staking) |
-| 🤖 **Multi-Agent Orchestration** | TronSage pays 3 specialized sub-agents via x402 micropayments to collaborate on deep analysis |
-| 🔮 **Prediction Market** | Daily TRX price predictions anchored on-chain via memo transactions |
-| 🔔 **Alert System** | Subscription alerts gated by real payment verification |
-| 🆔 **Agent Identity** | On-chain AI agent identity via Bank of AI **8004 Protocol** |
+| 功能 | 说明 |
+|------|------|
+| 🐋 **实时鲸鱼追踪** | TRON 链上 >$100K 大额转账实时监控（TronScan API） |
+| 🤖 **AI 分析助手** | Kimi AI 驱动的市场分析，需支付 **0.1 USDT/USDD x402 微支付** |
+| 💼 **投资组合分析** | 完整的 TRON 钱包链上资产分解 |
+| 💎 **DeFi 机会** | TRON 生态收益对比（JustLend、SunSwap、质押） |
+| 🤖 **多智能体编排** | TronSage 通过 x402 支付 3 个专业子智能体协作分析 |
+| 🔮 **预测市场** | 日度 TRX 价格预测链上锚定（memo 交易） |
+| 🔔 **告警系统** | 订阅式告警，需验证真实支付 |
+| 🆔 **智能体身份** | Bank of AI **8004 协议**链上身份系统 |
 
 ---
 
