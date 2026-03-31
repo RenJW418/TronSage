@@ -1,7 +1,7 @@
 # ⬡ TronSage — AI 驱动的 TRON 链上智能体
 
 > **🏆 TRON × Bank of AI Hackathon 2025 参赛项目**  
-> 开发周期：2025年3月16日 - 3月31日
+> 开发周期：2025 年 3 月 16 日 - 3 月 31 日
 
 [![TRON](https://img.shields.io/badge/网络-TRON%20主网-red?style=flat-square)](https://tron.network)
 [![Bank of AI](https://img.shields.io/badge/驱动-Bank%20of%20AI-cyan?style=flat-square)](https://bankofai.io)
@@ -9,328 +9,190 @@
 [![Next.js](https://img.shields.io/badge/框架-Next.js%2014-black?style=flat-square)](https://nextjs.org)
 [![License](https://img.shields.io/badge/开源协议-MIT-green?style=flat-square)](LICENSE)
 
-**[English README](./README.en.md)** | **中文文档**
+**中文文档（默认）** | [English README](./README.en.md)
 
 ---
 
-## 🚀 项目介绍
+## 项目简介
 
-**TronSage** 是一个 AI 驱动的 TRON 链上智能体，集实时鲸鱼追踪、AI 市场分析、DeFi 机会监控和预测市场于一体 — AI 服务通过 **Bank of AI 的 x402 微支付协议**实现商业化，支持 **USDT 和 USDD** 双代币付款。
+TronSage 是一个面向 TRON 生态的 AI 链上智能体平台，集成了：
+- 链上大额资金流监控
+- 付费 AI 市场分析
+- DeFi 收益机会筛选
+- 多智能体协同决策
+- 预测上链存证
 
-### 核心功能
-
-| 功能 | 说明 |
-|------|------|
-| 🐋 **实时鲸鱼追踪** | TRON 链上 >$100K 大额转账实时监控（TronScan API） |
-| 🤖 **AI 分析助手** | Kimi AI 驱动的市场分析，需支付 **0.1 USDT/USDD x402 微支付** |
-| 💼 **投资组合分析** | 完整的 TRON 钱包链上资产分解 |
-| 💎 **DeFi 机会** | TRON 生态收益对比（JustLend、SunSwap、质押） |
-| 🤖 **多智能体编排** | TronSage 通过 x402 支付 3 个专业子智能体协作分析 |
-| 🔮 **预测市场** | 日度 TRX 价格预测链上锚定（memo 交易） |
-| 🔔 **告警系统** | 订阅式告警，需验证真实支付 |
-| 🆔 **智能体身份** | Bank of AI **8004 协议**链上身份系统 |
+平台通过 Bank of AI 的 x402 协议实现智能体商业化服务，支持 USDT 与 USDD（TRC20）双代币支付。
 
 ---
 
-## 🏗️ Bank of AI Integration
+## 核心能力
 
-TronSage integrates **all 4** Bank of AI infrastructure layers:
-
-### 1. x402 Payment Protocol
-Supports both **USDT (6-decimal TRC20)** and **USDD (18-decimal TRC20)** tokens. The full payment flow:
-
-```
-User selects USDT or USDD in PaymentModal
-  → GET /api/payment/request?token=USDT|USDD
-  → Server returns payment address + amount via createX402PaymentRequest()
-  → User sends 0.1 USDT/USDD to agent's TRON address
-  → User submits 64-char transaction hash
-  → POST /api/payment/request — verifyX402Payment() validates on TronScan
-  → Proof returned to frontend as X402PaymentProof
-  → AI analysis / alerts / multi-agent job unlocked
-```
-
-- **Token contracts**:
-  - USDT: `TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t` (6 decimals, raw `100000`)
-  - USDD: `TPYmHEhy5n8TCEfYGqW2rPxsghSfzghPDn` (18 decimals, raw `100000000000000000`)
-- **Verification**: `src/lib/bankofai.ts` — `verifyX402Payment()` calls TronScan API, validates `contractRet === "SUCCESS"`, checks `trc20TransferInfo[]`, uses `BigInt` for USDD 18-decimal comparison
-- **API**: `src/app/api/analyze/route.ts`, `src/app/api/alerts/route.ts` — x402-gated endpoints
-- **UI**: `src/components/PaymentModal.tsx` — USDT/USDD toggle, live payment request fetch, TxHash verification
-
-### 2. 8004 On-chain Identity
-TronSage maintains a verifiable on-chain identity with live activity tracking:
-
-- Unique agent ID: `8004-TRONSAGE-001`
-- Reputation score (grows with each verified job/payment)
-- Live activity log (in-memory + TronScan-anchored events)
-- Achievement badges & service tier
-- On-chain memo anchoring via `recordOnchainMemo()` in `src/lib/tron.ts`
-- **API**: `src/app/api/identity/route.ts`
-- **UI**: `src/components/AgentIdentity.tsx`
-
-### 3. MCP Server
-MCP configuration for AI tool chaining with TRON blockchain data:
-
-- `wallet.get_balance` — TRX + TRC20 balance lookup
-- `defi.get_opportunities` — TRON DeFi protocol yields
-- `chain.get_events` — On-chain event feed
-- **File**: `src/lib/bankofai.ts` — `getMCPServerConfig()`
-
-### 4. Skills Modules
-Integrated portfolio analysis and swap quote skills:
-
-- `skillGetPortfolio()` — wallet portfolio data
-- `skillSwapQuote()` — JustSwap quote simulation
-- **File**: `src/lib/bankofai.ts`
+| 模块 | 功能说明 |
+|------|----------|
+| 实时鲸鱼追踪 | 监控 TRON 链上大额转账，识别异常资金流 |
+| AI 分析助手 | 自然语言提问，返回结构化市场分析 |
+| 投资组合分析 | 输入地址即得 TRX/TRC20 资产构成 |
+| DeFi 机会雷达 | 对比 APY、TVL、风险等级 |
+| 多智能体编排 | 协调多个子智能体并进行任务结算 |
+| 预测市场 | 日度预测生成与结果回填 |
+| 告警系统 | 按规则订阅告警，触发后推送 |
+| 8004 身份系统 | 智能体信誉、服务历史、活动记录 |
 
 ---
 
-## 🤖 Multi-Agent Economy
+## Bank of AI 集成说明
 
-TronSage features a novel **multi-agent economic model** where the orchestrator pays sub-agents via x402 micropayments:
+### 1. x402 支付协议（USDT + USDD）
 
-```
-POST /api/multi-agent
-  ├── Pay price-oracle agent    0.001 USDT → TRC20 transfer on TRON
-  ├── Pay whale-analyst agent   0.005 USDT → TRC20 transfer on TRON
-  └── Pay risk-assessor agent   0.003 USDT → TRC20 transfer on TRON
-```
+已支持双代币支付：
+- USDT（TRC20，6 位精度）
+- USDD（TRC20，18 位精度）
 
-When `AGENT_TRON_PRIVATE_KEY` is set, payments are **real on-chain TRC20 transfers** executed server-side via TronWeb. Without a key, payments are simulated with clearly-labeled mock hashes for demo purposes.
+标准支付流程：
+1. 前端请求支付参数：`GET /api/payment/request?token=USDT|USDD`
+2. 用户向智能体地址支付 0.1 USDT 或 0.1 USDD
+3. 提交交易哈希：`POST /api/payment/request`
+4. 服务端调用 TronScan 进行链上校验后放行 AI 服务
 
----
+相关实现：
+- 支付创建与校验：`src/lib/bankofai.ts`
+- 支付接口：`src/app/api/payment/request/route.ts`
+- 支付弹窗：`src/components/PaymentModal.tsx`
 
-## 🔮 Prediction Market with On-chain Anchoring
+### 2. 8004 链上身份协议
 
-Daily TRX price predictions are cryptographically anchored to the TRON blockchain:
+智能体身份信息包含：
+- 唯一 Agent ID
+- 信誉分与等级
+- 服务历史与活动记录
+- 支付与任务行为沉淀
 
-```
-POST /api/prediction
-  → Generate deterministic prediction digest
-  → recordOnchainMemo(digest) — broadcasts 1-SUN self-transfer with memo
-  → txHash stored with prediction record
-  → Verifiable by anyone on TronScan
-```
+相关实现：
+- 身份逻辑：`src/lib/bankofai.ts`
+- 身份接口：`src/app/api/identity/route.ts`
+- 身份卡片：`src/components/AgentIdentity.tsx`
 
----
+### 3. MCP 能力暴露
 
-## ⚙️ Technical Architecture
+提供可扩展的链上能力接口，支持钱包、DeFi、事件查询等工具链路。
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        TronSage                             │
-│                                                             │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
-│  │  Next.js 14  │  │  TronScan    │  │   Bank of AI     │  │
-│  │  App Router  │  │  Public API  │  │   x402 + 8004    │  │
-│  │  TypeScript  │  │  TronWeb.js  │  │   MCP + Skills   │  │
-│  └──────┬───────┘  └──────┬───────┘  └────────┬─────────┘  │
-│         │                 │                   │             │
-│  ┌──────▼─────────────────▼───────────────────▼─────────┐  │
-│  │                  Next.js API Routes                   │  │
-│  │  /api/whale-tracker  /api/analyze    (x402 gated)     │  │
-│  │  /api/portfolio      /api/defi       /api/identity    │  │
-│  │  /api/multi-agent    /api/prediction /api/alerts      │  │
-│  │  /api/payment/request  /api/stats   /api/chat         │  │
-│  └──────────────────────────┬────────────────────────────┘  │
-│                             │                               │
-│  ┌──────────────────────────▼────────────────────────────┐  │
-│  │                  React Components                      │  │
-│  │  WhaleTracker  AIAnalyst  Portfolio  DeFi  AgentID     │  │
-│  │  MultiAgentFlow  PredictionMarket  AlertSystem         │  │
-│  └───────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
-```
+### 4. Skills 能力模块
 
-### Tech Stack
-- **Frontend**: Next.js 14 (App Router), TypeScript, Tailwind CSS
-- **UI**: Recharts, custom cyberpunk theme (Orbitron / Share Tech Mono)
-- **Blockchain**: TronWeb.js (server-side), TronScan API, TronGrid API
-- **AI**: Kimi (Moonshot) via OpenAI-compatible API
-- **Payment**: Bank of AI x402 Protocol — USDT + USDD TRC20
-- **Identity**: Bank of AI 8004 Protocol
-- **Deploy**: Vercel
-│  │  /api/whale-tracker  /api/analyze (x402 gated)        │  │
-│  │  /api/portfolio      /api/defi    /api/identity       │  │
-│  └──────────────────────────┬────────────────────────────┘  │
-│                             │                               │
-│  ┌──────────────────────────▼────────────────────────────┐  │
-│  │                  React Components                      │  │
-│  │  WhaleTracker  AIAnalyst  Portfolio  DeFi  AgentID     │  │
-│  └───────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Tech Stack
-- **Frontend**: Next.js 14 (App Router), TypeScript, Tailwind CSS
-- **UI**: Recharts, Framer Motion, Orbitron/Share Tech Mono fonts
-- **Blockchain**: TronWeb.js, TronScan API, TronGrid API
-- **AI**: OpenAI GPT-4o
-- **Payment**: Bank of AI x402 Protocol (USDT TRC20)
-- **Identity**: Bank of AI 8004 Protocol
-- **Deploy**: Vercel (Edge Functions)
+内置可复用技能模块（如资产分析、Swap 报价）供 AI 编排调用。
 
 ---
 
-## 🖥️ Demo & Screenshots
+## 多智能体经济模型
 
-**Live Demo**: [https://tron-sage.vercel.app](https://tron-sage.vercel.app)
+接口：`POST /api/multi-agent`
 
-### Feature Walkthrough
+TronSage 会编排 3 个子智能体协同完成任务：
+- 价格预言机 Agent
+- 鲸鱼行为分析 Agent
+- 风险评估 Agent
 
-1. **Whale Tracker** — Real-time table of large USDT/USDD transfers with clickable TronScan links
-2. **AI Analyst** — Enter a query → select USDT or USDD → x402 PaymentModal → send payment → submit TxHash → GPT-powered analysis
-3. **Multi-Agent** — One click triggers 3 sub-agent micropayments + parallel analysis (price, whale, risk)
-4. **Prediction Market** — Daily TRX price prediction anchored on-chain; PUT endpoint to resolve with actual price
-5. **Portfolio** — Enter any TRON address → TRX + TRC20 token breakdown
-6. **DeFi** — Protocol comparison table (JustLend, SunSwap, Staking) sortable by APY/TVL/Risk
-7. **Agent ID** — TronSage's Bank of AI 8004 identity card with live reputation score & activity log
+当配置 `AGENT_TRON_PRIVATE_KEY` 后，可执行真实链上 TRC20 转账结算；未配置时进入可演示的模拟结算模式。
 
 ---
 
-## 🔧 Quick Start
+## 预测上链存证
 
-### Prerequisites
+接口：`POST /api/prediction`
+
+系统会为日度预测生成摘要并尝试写入链上 memo，形成可验证的时间戳证据；后续可通过 `PUT /api/prediction` 回填真实结果并评估准确率。
+
+---
+
+## 技术架构
+
+- 前端：Next.js 14（App Router）+ TypeScript + Tailwind CSS
+- 后端：Next.js API Routes
+- 区块链：TronWeb（服务端）、TronScan API、TronGrid API
+- AI：Kimi（Moonshot）兼容 OpenAI 接口
+- 支付：Bank of AI x402（USDT/USDD）
+- 身份：Bank of AI 8004
+- 部署：Vercel
+
+---
+
+## 快速启动
+
+### 环境要求
 - Node.js 18+
-- npm or yarn
+- npm 或 yarn
 
-### Installation
+### 安装与运行
 
 ```bash
-# Install dependencies
 npm install
-
-# Copy environment template
 cp .env.example .env.local
-
-# Edit .env.local with your keys
-```
-
-### Environment Variables
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `KIMI_API_KEY` | **Required for AI** | Moonshot (Kimi) API key for AI analysis |
-| `AGENT_TRON_ADDRESS` | **Required for payments** | Your TRON wallet address to receive payments |
-| `AGENT_TRON_PRIVATE_KEY` | Optional | Private key for server-side TRC20 transfers (multi-agent payments, on-chain memo anchoring) |
-| `TRONGRID_API_KEY` | Optional | TronGrid API key for higher rate limits |
-| `OPENAI_API_KEY` | Optional | Alternative: standard OpenAI key (if not using Kimi) |
-
-> **Note**: Without `AGENT_TRON_PRIVATE_KEY`, the app still works — multi-agent payments are simulated with labeled mock hashes, and on-chain memo anchoring is skipped. Set `KIMI_API_KEY` + `AGENT_TRON_ADDRESS` for the full production experience.
-
-### Run Development Server
-
-```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
+浏览器打开：`http://localhost:3000`
 
-### Build & Deploy
+### 构建
 
 ```bash
-# Type-check + build
 npm run build
-
-# Deploy to Vercel
-npx vercel --prod
 ```
 
 ---
 
-## 📁 Project Structure
+## 环境变量
 
-```
+| 变量名 | 是否必填 | 说明 |
+|--------|----------|------|
+| `KIMI_API_KEY` | 是 | AI 分析能力密钥 |
+| `AGENT_TRON_ADDRESS` | 是 | 接收 USDT/USDD 支付的 TRON 地址 |
+| `AGENT_TRON_PRIVATE_KEY` | 否 | 多智能体真实链上转账与 memo 存证 |
+| `TRONGRID_API_KEY` | 否 | 提升链上接口速率限制 |
+| `TELEGRAM_BOT_TOKEN` | 否 | Telegram Bot Token |
+| `TELEGRAM_WEBHOOK_SECRET` | 否 | Telegram Webhook 签名密钥 |
+
+---
+
+## 项目结构
+
+```text
 tron-sage/
 ├── src/
-│   ├── app/
-│   │   ├── api/
-│   │   │   ├── analyze/route.ts          # 🔐 x402-gated AI analysis (USDT + USDD)
-│   │   │   ├── whale-tracker/route.ts    # 🐋 TRON whale transactions (TronScan)
-│   │   │   ├── portfolio/route.ts        # 💼 Wallet portfolio data
-│   │   │   ├── defi/route.ts             # 💎 DeFi opportunities
-│   │   │   ├── payment/request/route.ts  # 💳 x402 payment create + verify
-│   │   │   ├── multi-agent/route.ts      # 🤖 Multi-agent orchestration + micropayments
-│   │   │   ├── prediction/route.ts       # 🔮 Daily predictions + on-chain anchoring
-│   │   │   ├── alerts/route.ts           # 🔔 Alert subscriptions (x402 gated)
-│   │   │   ├── stats/route.ts            # 📊 TRON network stats
-│   │   │   ├── identity/route.ts         # 🆔 8004 agent identity
-│   │   │   ├── chat/route.ts             # 💬 NLP chat interface
-│   │   │   └── bot/                      # 🤖 Telegram + Feishu bot webhooks
-│   │   ├── globals.css                   # Cyberpunk theme
-│   │   ├── layout.tsx
-│   │   └── page.tsx                      # Main dashboard
+│   ├── app/api/
+│   │   ├── analyze/route.ts
+│   │   ├── payment/request/route.ts
+│   │   ├── multi-agent/route.ts
+│   │   ├── prediction/route.ts
+│   │   ├── alerts/route.ts
+│   │   ├── identity/route.ts
+│   │   ├── whale-tracker/route.ts
+│   │   └── ...
 │   ├── components/
-│   │   ├── Header.tsx
-│   │   ├── StatsBar.tsx
-│   │   ├── WhaleTracker.tsx
-│   │   ├── AIAnalyst.tsx                 # AI query + x402 payment trigger
-│   │   ├── PaymentModal.tsx              # USDT/USDD token toggle + TxHash verify
-│   │   ├── MultiAgentFlow.tsx
-│   │   ├── PredictionMarket.tsx
-│   │   ├── AlertSystem.tsx
-│   │   ├── PortfolioAnalyzer.tsx
-│   │   ├── DeFiOpportunities.tsx
-│   │   └── AgentIdentity.tsx             # 8004 identity card
 │   ├── lib/
-│   │   ├── bankofai.ts                   # x402 + 8004 core integration
-│   │   ├── tron.ts                       # TronScan fetch + TronWeb signing layer
-│   │   └── openai.ts                     # Kimi AI client
 │   └── types/
-│       ├── index.ts                      # All TypeScript types
-│       └── tronweb.d.ts                  # TronWeb ambient declaration
-├── .env.example
-├── package.json
-└── README.md
+├── README.md
+├── README.en.md
+└── .env.example
 ```
 
 ---
 
-## 💡 Innovation Highlights
+## 安全说明
 
-### x402 Dual-Token Micropayment (Bank of AI)
-The AI analysis endpoint implements the **full x402 payment flow** for both USDT and USDD:
-1. Frontend requests payment parameters via `GET /api/payment/request?token=USDT|USDD`
-2. User sends 0.1 USDT or 0.1 USDD to agent's TRON address
-3. `POST /api/payment/request` with `txHash` → verified on TronScan using `BigInt` for 18-decimal USDD safety
-4. `X402PaymentProof` returned and used to unlock AI services
-
-This creates a **self-sustaining AI agent economy** — TronSage earns from every analysis request.
-
-### Multi-Agent Economy on TRON
-TronSage demonstrates a real **agent-to-agent payment** model where the orchestrator transfers USDT to sub-agents for specialized work. With a private key configured, these are actual TRC20 broadcasts — verifiable on TronScan.
-
-### On-chain Prediction Anchoring
-Daily TRX price predictions are hashed and anchored to TRON via 1-SUN self-transfer memo transactions, creating tamper-proof proof-of-prediction before the outcome is known.
-
-### 8004 On-chain Identity
-TronSage maintains a live reputation score that grows with every completed job, creating a **verifiable trust record** for the AI agent — the foundation of an AI service marketplace.
+- 前端不暴露私钥
+- 支付校验依赖链上交易查询，避免本地伪造
+- 地址与交易哈希均做格式校验
+- `.env.local` 不应提交到仓库
 
 ---
 
-## 🔒 Security
+## 致谢
 
-- All TRON address inputs validated with regex (`/^T[a-zA-Z0-9]{33}$/`)
-- Private keys never sent from frontend
-- API routes use server-side only environment variables
-- Payment verification uses on-chain transaction lookup (no trust required)
-- No user data stored
-
----
-
-## 📄 License
-
-MIT License — see [LICENSE](LICENSE)
+- [Bank of AI](https://bankofai.io)
+- [TRON](https://tron.network)
+- [TronScan](https://tronscan.org)
+- [Moonshot AI](https://kimi.moonshot.cn)
 
 ---
 
-## 🙏 Acknowledgments
-
-- **[Bank of AI](https://bankofai.io)** — x402 + 8004 infrastructure
-- **[TRON Foundation](https://tron.network)** — Blockchain infrastructure  
-- **[TronScan](https://tronscan.org)** — Public on-chain data API
-- **[OpenAI](https://openai.com)** — GPT-4o language model
-
----
-
-*Built with ❤️ for the TRON × Bank of AI Hackathon 2025*
+为 TRON × Bank of AI Hackathon 构建。
