@@ -237,49 +237,52 @@ export async function fetchWhaleTransactions(
       ? ["TPYmHEhy5n8TCEfYGqW2rPxsghSfzghPDn"]
       : ["TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", "TPYmHEhy5n8TCEfYGqW2rPxsghSfzghPDn"];
 
+  // TronGrid API - Tron Foundation official, accessible from Vercel
+  const TRONGRID = "https://api.trongrid.io/v1";
   try {
-    const promises = contractAddresses.map((contract) =>
-      fetch(
-        `${TRONSCAN}/api/transfer/trc20?sort=-timestamp&limit=20&start=0&contract=${contract}&filterTokenValue=1`,
-        { next: { revalidate: 20 } }
-      ).then((r) => (r.ok ? r.json() : { token_transfers: [] }))
+    const results = await Promise.allSettled(
+      contractAddresses.map((contract) =>
+        fetch(
+          TRONGRID + "/contracts/" + contract + "/events?event_name=Transfer&limit=50&order_by=block_timestamp,desc",
+          { next: { revalidate: 20 } }
+        ).then((r) => (r.ok ? r.json() : { data: [] }))
+      )
     );
 
-    const results = await Promise.allSettled(promises);
     const allTxs: WhaleTransaction[] = [];
 
     results.forEach((result, idx) => {
       if (result.status !== "fulfilled") return;
       const tokenInfo = KNOWN_TOKENS[contractAddresses[idx]];
-      const transfers = result.value.token_transfers || result.value.data || [];
+      const events = (result.value.data || []) as Record<string, unknown>[];
 
-      transfers.forEach((tx: Record<string, unknown>) => {
-        const rawAmount = parseFloat(String(tx.quant || tx.amount || "0"));
-        const amount = rawAmount / Math.pow(10, tokenInfo.decimals);
-        if (amount < minUSD / 1) return; // rough filter
-
-        const from = String(tx.from_address || tx.transferFromAddress || "");
-        const to = String(tx.to_address || tx.transferToAddress || "");
+      events.forEach((evt) => {
+        const res = (evt.result || {}) as Record<string, string>;
+        const from = res.from || res["0"] || "";
+        const to = res.to || res["1"] || "";
+        const rawValue = res.value || res["2"] || "0";
+        const amount = parseFloat(rawValue) / Math.pow(10, tokenInfo.decimals);
+        if (!from || !to || amount < minUSD) return;
 
         allTxs.push({
-          hash: String(tx.transaction_id || tx.hash || ""),
+          hash: String(evt.transaction_id || ""),
           from,
           to,
           amount,
-          amountUSD: amount, // USDT/USDD �?1:1 USD
+          amountUSD: amount,
           tokenSymbol: tokenInfo.symbol,
           tokenName: tokenInfo.name,
           contractAddress: contractAddresses[idx],
-          timestamp: Number(tx.block_ts || tx.timestamp || Date.now()),
-          blockNumber: Number(tx.block || 0),
+          timestamp: Number(evt.block_timestamp || Date.now()),
+          blockNumber: Number(evt.block_number || 0),
           confirmed: true,
           isExchange: EXCHANGE_ADDRESSES.has(from) || EXCHANGE_ADDRESSES.has(to),
         });
       });
     });
 
-    const finalTxs = allTxs.filter((tx) => tx.amount >= minUSD).sort((a, b) => b.timestamp - a.timestamp).slice(0, 30);
-      return finalTxs.length > 0 ? finalTxs : generateMockWhaleTransactions();
+    const finalTxs = allTxs.sort((a, b) => b.timestamp - a.timestamp).slice(0, 30);
+    return finalTxs.length > 0 ? finalTxs : generateMockWhaleTransactions();
   } catch (err) {
     console.error("[Tron] fetchWhaleTransactions error:", err);
     return generateMockWhaleTransactions();

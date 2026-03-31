@@ -107,7 +107,34 @@ export async function GET() {
 
   return NextResponse.json({
     success: true,
-    predictions: sorted,
+    predictions: sorted.map((p) => ({
+      id: p.id,
+      // Fields the frontend Prediction interface expects
+      targetDate: p.date,
+      predictedPrice: p.targetPrice,
+      currentPriceAtPrediction: parseFloat(
+        (p.direction === "up"
+          ? p.targetPrice / 1.04
+          : p.direction === "down"
+          ? p.targetPrice / 0.96
+          : p.targetPrice
+        ).toFixed(4)
+      ),
+      direction: p.direction,
+      confidence: p.confidence,
+      reasoning: p.reasoning,
+      signals: p.reasoning
+        .split(/[.。]/)
+        .map((s) => s.trim())
+        .filter((s) => s.length > 5)
+        .slice(0, 3),
+      createdAt: p.createdAt,
+      resolvedAt: p.resolved ? p.createdAt + 86_400_000 : undefined,
+      actualPrice: p.actualPrice,
+      outcome: p.accurate === true ? "correct" : p.accurate === false ? "incorrect" : undefined,
+      accuracyScore: p.accurate === true ? 85 : p.accurate === false ? 30 : undefined,
+      onChainTxHash: p.onChainTxHash,
+    })),
     accuracy,
     agentStats,
     hasTodayPrediction: sorted.some((p) => p.date === today),
