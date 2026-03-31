@@ -147,11 +147,10 @@ export function formatAmount(amount: number): string {
 export async function fetchTronNetworkStats(): Promise<TronNetworkStats> {
   const timeOffset = Date.now() - 1710000000000;
   try {
-    const [overviewRes, priceRes, binanceRes, blockRes] = await Promise.allSettled([
+    const [overviewRes, priceRes, binanceRes] = await Promise.allSettled([
       fetch(`${TRONSCAN}/api/index/overview`, { next: { revalidate: 30 } }),
       fetch(`${TRONSCAN}/api/token/price?token=TRX`, { next: { revalidate: 30 } }),
       fetch("https://api.binance.com/api/v3/ticker/24hr?symbol=TRXUSDT", { next: { revalidate: 30 } }),
-      tronWeb.trx.getCurrentBlock()
     ]);
 
     // Defaults
@@ -172,12 +171,7 @@ export async function fetchTronNetworkStats(): Promise<TronNetworkStats> {
       if (d.prices?.["TRX_USDT"]) trxPrice = parseFloat(d.prices["TRX_USDT"]);
     }
 
-    // 2. Try TronWeb for real block
-    if (blockRes.status === "fulfilled" && blockRes.value?.block_header?.raw_data?.number) {
-      blockHeight = blockRes.value.block_header.raw_data.number;
-    }
-
-    // 3. Try TronScan for overview
+    // 2. Try TronScan for overview
     if (overviewRes.status === "fulfilled" && overviewRes.value.ok) {
       const d = await overviewRes.value.json();
       blockHeight = d.block || blockHeight;

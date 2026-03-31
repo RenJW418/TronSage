@@ -30,6 +30,12 @@ const SUB_AGENTS = [
 
 const USDT_CONTRACT = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
 
+const AGENT_META: Record<string, { icon: string; color: string }> = {
+  "price-oracle": { icon: "[Price]", color: "#00F5D4" },
+  "whale-analyst": { icon: "[Whale]", color: "#00bbff" },
+  "risk-assessor": { icon: "[Risk]",  color: "#F15BB5" },
+};
+
 async function paySubAgent(
   agentId: string,
   toAddress: string,
@@ -57,7 +63,7 @@ function executeSubAgent(agentId: string) {
   const timestamp = new Date().toISOString();
   if (agentId === "price-oracle") {
     return {
-      trxPrice: (parseFloat((Math.random() * 0.05 + 0.095).toFixed(4))),
+      trxPrice: parseFloat((Math.random() * 0.05 + 0.095).toFixed(4)),
       change24h: parseFloat((Math.random() * 10 - 5).toFixed(2)),
       volume24h: Math.floor(Math.random() * 50_000_000 + 100_000_000),
       marketCap: Math.floor(Math.random() * 500_000_000 + 8_000_000_000),
@@ -80,7 +86,7 @@ function executeSubAgent(agentId: string) {
       fearGreedIndex: fearIndex,
       sentiment: fearIndex > 55 ? "greed" : fearIndex < 40 ? "fear" : "neutral",
       volatilityScore: parseFloat((Math.random() * 40 + 20).toFixed(1)),
-      recommendation: fearIndex > 60 ? "CAUTION  consider reducing exposure" : "HOLD  monitor closely",
+      recommendation: fearIndex > 60 ? "CAUTION - reducing exposure advised" : "HOLD - monitor closely",
       timestamp,
     };
   }
@@ -96,8 +102,8 @@ export async function GET() {
       address: a.address,
       specialty: a.task,
       cost: (parseInt(a.fee) / 1_000_000).toFixed(4),
-      icon: a.id === "price-oracle" ? "" : a.id === "whale-analyst" ? "" : "",
-      color: a.id === "price-oracle" ? "#00F5D4" : a.id === "whale-analyst" ? "#00bbff" : "#F15BB5"
+      icon: AGENT_META[a.id].icon,
+      color: AGENT_META[a.id].color,
     })),
   });
 }
@@ -105,45 +111,44 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
-    const query = body.query || "对当前TRON市场进行全面多维度分析";
-    
+    const query = (body.query as string) || "Analyze the current TRON market";
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const events: any[] = [];
     events.push({
       type: "start",
-      message: ` 接收到主任务: "${query}"，开始编排子 Agent。`,
-      timestamp: Date.now()
+      message: `Received task: "${query}". Dispatching sub-agents...`,
+      timestamp: Date.now(),
     });
 
     let totalPaidUsdt = 0;
 
     for (const agent of SUB_AGENTS) {
-      const icon = agent.id === "price-oracle" ? "" : agent.id === "whale-analyst" ? "" : "";
-      const color = agent.id === "price-oracle" ? "#00F5D4" : agent.id === "whale-analyst" ? "#00bbff" : "#F15BB5";
+      const meta = AGENT_META[agent.id];
       const feeUsdt = (parseInt(agent.fee) / 1_000_000).toFixed(4);
-      
       const payment = await paySubAgent(agent.id, agent.address, agent.fee);
       totalPaidUsdt += parseFloat(feeUsdt);
-      
+
       events.push({
         type: "payment",
         agentId: agent.id,
         agentName: agent.name,
-        agentIcon: icon,
-        agentColor: color,
+        agentIcon: meta.icon,
+        agentColor: meta.color,
         amount: feeUsdt,
         txHash: payment.txHash,
-        message: `向 ${agent.name} 支付 ${feeUsdt} USDT 触发服务`,
-        timestamp: Date.now()
+        message: `Paid ${feeUsdt} USDT to ${agent.name} via x402`,
+        timestamp: Date.now(),
       });
 
       events.push({
         type: "working",
         agentId: agent.id,
         agentName: agent.name,
-        agentIcon: icon,
-        agentColor: color,
-        message: `> 执行任务: ${agent.task}`,
-        timestamp: Date.now()
+        agentIcon: meta.icon,
+        agentColor: meta.color,
+        message: `> Task: ${agent.task}`,
+        timestamp: Date.now(),
       });
 
       const result = executeSubAgent(agent.id);
@@ -151,35 +156,35 @@ export async function POST(req: NextRequest) {
         type: "result",
         agentId: agent.id,
         agentName: agent.name,
-        agentIcon: icon,
-        agentColor: color,
+        agentIcon: meta.icon,
+        agentColor: meta.color,
         data: JSON.stringify(result, null, 2),
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     }
 
     events.push({
       type: "synthesis",
-      message: "多智能体数据回收完毕。分析结论：当前 TRON 链上资金活跃度正常，TRX价格稳定，未见明显系统性抛售风险。建议以持有为主，密切关注 DeFi 质押收益变动。",
-      timestamp: Date.now()
+      message: "All sub-agent data collected. Conclusion: TRON network stable, TRX price normal, no systemic sell-off detected. Recommend HOLD.",
+      timestamp: Date.now(),
     });
 
     events.push({
       type: "complete",
-      message: " 多智能体编排任务顺利完成并存证",
+      message: "Multi-agent orchestration complete.",
       totalPaid: totalPaidUsdt.toFixed(4),
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
 
     try {
       await recordAgentActivity({
         type: "job_completed",
-        description: `Orchestrated ${SUB_AGENTS.length} sub-agents for analysis`,
+        description: `Orchestrated ${SUB_AGENTS.length} sub-agents for: ${query.slice(0, 60)}`,
         amount: totalPaidUsdt,
         token: "USDT",
         timestamp: Date.now() / 1000,
       });
-    } catch(e) {}
+    } catch (_) {}
 
     return NextResponse.json({ success: true, events, totalPaid: totalPaidUsdt.toFixed(4) });
   } catch (err) {
