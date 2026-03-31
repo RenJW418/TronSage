@@ -146,53 +146,35 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "不支持的告警类型" }, { status: 400 });
     }
 
-    // ── x402 subscription payment required ────────────────────
-    if (!txHash) {
-      const paymentRequest = createX402PaymentRequest("Alert Subscription — TronSage");
-      return NextResponse.json(
-        {
-          error: "Payment Required",
-          code: 402,
-          message: "创建告警需要支付 0.1 USDT 订阅费（通过 x402 协议）",
-          paymentRequest,
-        },
-        { status: 402 }
+    // ── x402 subscription payment (demo mode: bypass when no txHash) ──
+    const isDemoMode = !txHash;
+    if (txHash) {
+      // Paid mode: validate format then verify on-chain
+      if (!/^[0-9a-fA-F]{64}$/.test(txHash)) {
+        return NextResponse.json(
+          { error: "Invalid TRON transaction hash format" },
+          { status: 400 }
+        );
+      }
+      const verifyResult = await verifyX402Payment(
+        { txHash, amount: "100000", token: "USDT", from: "", timestamp: Date.now() / 1000, requestId: "" },
+        { toAddress: AGENT_ADDRESS(), amount: "100000", tokenContract: USDT_CONTRACT }
       );
+      if (!verifyResult.valid) {
+        return NextResponse.json(
+          { error: "支付验证失败", details: verifyResult.error },
+          { status: 402 }
+        );
+      }
+      recordAgentActivity({
+        type: "payment_received",
+        description: `Alert subscription: ${template.label}`,
+        amount: 0.1,
+        token: "USDT",
+        timestamp: Date.now() / 1000,
+        txHash,
+      }).catch(console.error);
     }
-
-    if (!/^[0-9a-fA-F]{64}$/.test(txHash)) {
-      return NextResponse.json(
-        { error: "Invalid TRON transaction hash format" },
-        { status: 400 }
-      );
-    }
-
-    // Verify the on-chain payment
-    const verifyResult = await verifyX402Payment(
-      { txHash, amount: "100000", token: "USDT", from: "", timestamp: Date.now() / 1000, requestId: "" },
-      { toAddress: AGENT_ADDRESS(), amount: "100000", tokenContract: USDT_CONTRACT }
-    );
-
-    if (!verifyResult.valid) {
-      return NextResponse.json(
-        {
-          error: "Payment verification failed",
-          details: verifyResult.error,
-          hint: "请确认您已向 TronSage 地址发送了 0.1 USDT (TRC20) 并提交了正确的交易哈希",
-        },
-        { status: 402 }
-      );
-    }
-
-    // Record the subscription payment
-    recordAgentActivity({
-      type: "payment_received",
-      description: `Alert subscription: ${template.label}`,
-      amount: 0.1,
-      token: "USDT",
-      timestamp: Date.now() / 1000,
-      txHash,
-    }).catch(console.error);
 
     const alert: Alert = {
       id: generateAlertId(),
@@ -202,8 +184,8 @@ export async function POST(req: NextRequest) {
       threshold,
       unit: template.unit,
       sessionId,
-      subscriptionTxHash: txHash,
-      subscriptionPaid: "0.1",
+      subscriptionTxHash: txHash || "demo",
+      subscriptionPaid: isDemoMode ? "0" : "0.1",
       createdAt: Date.now(),
       status: "active",
       icon: template.icon,
@@ -211,10 +193,14 @@ export async function POST(req: NextRequest) {
 
     alertStore.set(alert.id, alert);
 
+    const modeNote = isDemoMode
+      ? "（演示模式 · 免费创建）"
+      : `已通过 x402 扣除 0.1 USDT（TxHash: ${txHash!.slice(0, 16)}...）`;
+
     return NextResponse.json({
       success: true,
       alert,
-      message: `✅ 告警已创建！当 ${alert.condition} 时，你将收到通知。已通过 x402 扣除 0.1 USDT 订阅费（TxHash: ${txHash.slice(0, 16)}...）`,
+      message: `✅ 告警已创建！当 ${alert.condition} 时，你将收到通知。${modeNote}`,
     });
   } catch (err) {
     console.error("[/api/alerts POST]", err);

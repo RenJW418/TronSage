@@ -237,15 +237,21 @@ export async function fetchWhaleTransactions(
       ? ["TPYmHEhy5n8TCEfYGqW2rPxsghSfzghPDn"]
       : ["TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", "TPYmHEhy5n8TCEfYGqW2rPxsghSfzghPDn"];
 
-  // TronGrid API - Tron Foundation official, accessible from Vercel
-  const TRONGRID = "https://api.trongrid.io/v1";
+  // TronScan public API with browser-like headers to avoid IP blocks
+  const TRONSCAN_WHALE = "https://apilist.tronscanapi.com";
+  const headers = {
+    "Accept": "application/json, text/plain, */*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Referer": "https://tronscan.org/",
+    "Origin": "https://tronscan.org",
+  };
   try {
     const results = await Promise.allSettled(
       contractAddresses.map((contract) =>
         fetch(
-          TRONGRID + "/contracts/" + contract + "/events?event_name=Transfer&limit=50&order_by=block_timestamp,desc",
-          { next: { revalidate: 20 } }
-        ).then((r) => (r.ok ? r.json() : { data: [] }))
+          `${TRONSCAN_WHALE}/api/transfer/trc20?sort=-timestamp&limit=50&start=0&contract=${contract}&filterTokenValue=1`,
+          { headers, cache: "no-store" }
+        ).then((r) => (r.ok ? r.json() : { token_transfers: [] }))
       )
     );
 
@@ -254,18 +260,19 @@ export async function fetchWhaleTransactions(
     results.forEach((result, idx) => {
       if (result.status !== "fulfilled") return;
       const tokenInfo = KNOWN_TOKENS[contractAddresses[idx]];
-      const events = (result.value.data || []) as Record<string, unknown>[];
+      const transfers = (result.value.token_transfers || result.value.data || []) as Record<string, unknown>[];
 
-      events.forEach((evt) => {
-        const res = (evt.result || {}) as Record<string, string>;
-        const from = res.from || res["0"] || "";
-        const to = res.to || res["1"] || "";
-        const rawValue = res.value || res["2"] || "0";
-        const amount = parseFloat(rawValue) / Math.pow(10, tokenInfo.decimals);
-        if (!from || !to || amount < minUSD) return;
+      transfers.forEach((tx) => {
+        const rawAmount = parseFloat(String(tx.quant || tx.amount || "0"));
+        const amount = rawAmount / Math.pow(10, tokenInfo.decimals);
+        if (amount < minUSD) return;
+
+        const from = String(tx.from_address || tx.transferFromAddress || "");
+        const to = String(tx.to_address || tx.transferToAddress || "");
+        if (!from || !to) return;
 
         allTxs.push({
-          hash: String(evt.transaction_id || ""),
+          hash: String(tx.transaction_id || tx.hash || ""),
           from,
           to,
           amount,
@@ -273,8 +280,8 @@ export async function fetchWhaleTransactions(
           tokenSymbol: tokenInfo.symbol,
           tokenName: tokenInfo.name,
           contractAddress: contractAddresses[idx],
-          timestamp: Number(evt.block_timestamp || Date.now()),
-          blockNumber: Number(evt.block_number || 0),
+          timestamp: Number(tx.block_ts || tx.timestamp || Date.now()),
+          blockNumber: Number(tx.block || 0),
           confirmed: true,
           isExchange: EXCHANGE_ADDRESSES.has(from) || EXCHANGE_ADDRESSES.has(to),
         });
