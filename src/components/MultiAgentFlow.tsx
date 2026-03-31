@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -85,6 +85,34 @@ function EventLine({ event, index, visible }: { event: MultiAgentEvent; index: n
   }
 
   if (event.type === "result") {
+    // Parse JSON and render a human-readable Chinese summary
+    let summary: React.ReactNode = <span className="text-[12px] text-cyber-text">{event.data}</span>;
+    try {
+      const parsed = JSON.parse(event.data || "{}");
+      const lines: string[] = [];
+      if (parsed.trxPrice !== undefined)
+        lines.push(`📈 TRX 当前价格：$${parsed.trxPrice}  |  24h 涨跌：${parsed.change24h > 0 ? "+" : ""}${parsed.change24h}%`);
+      if (parsed.volume24h !== undefined)
+        lines.push(`💹 24h 成交量：$${(parsed.volume24h / 1e6).toFixed(1)}M  |  市值：$${(parsed.marketCap / 1e9).toFixed(2)}B`);
+      if (parsed.largeTransactions !== undefined)
+        lines.push(`🐋 大额转账笔数：${parsed.largeTransactions} 笔  |  总转移量：$${(parsed.totalVolume / 1e6).toFixed(2)}M`);
+      if (parsed.topWhaleAction)
+        lines.push(`🧭 主力动向：${parsed.topWhaleAction === "accumulating" ? "积极建仓 🟢" : "分批派发 🔴"}  |  警戒级别：${parsed.alertLevel === "high" ? "高风险 ⚠️" : "正常 ✅"}`);
+      if (parsed.fearGreedIndex !== undefined)
+        lines.push(`😨 恐贫指数：${parsed.fearGreedIndex}  |  市场情绪：${parsed.sentiment === "greed" ? "贪婪" : parsed.sentiment === "fear" ? "恐惧" : "中性"}`);
+      if (parsed.volatilityScore !== undefined)
+        lines.push(`📊 波动率评分：${parsed.volatilityScore}  |  建议操作：${parsed.recommendation}`);
+      if (lines.length > 0) {
+        summary = (
+          <div className="flex flex-col gap-1.5">
+            {lines.map((l, i) => (
+              <p key={i} className="text-[12px] text-cyber-text leading-relaxed">{l}</p>
+            ))}
+          </div>
+        );
+      }
+    } catch { /* use raw data */ }
+
     return (
       <div style={style} className="flex items-start gap-3 py-2 pl-6">
         <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0"
@@ -93,10 +121,10 @@ function EventLine({ event, index, visible }: { event: MultiAgentEvent; index: n
         </div>
         <div className="flex-1 rounded-lg px-3 py-2"
           style={{ background: `${event.agentColor}08`, border: `1px solid ${event.agentColor}20` }}>
-          <p className="font-orbitron text-[10px] font-bold mb-1" style={{ color: event.agentColor }}>
-            {event.agentName?.toUpperCase()} 返回结果
+          <p className="font-orbitron text-[10px] font-bold mb-2" style={{ color: event.agentColor }}>
+            {event.agentName?.toUpperCase()} · 链上结果
           </p>
-          <p className="text-[12px] text-cyber-text leading-relaxed">{event.data}</p>
+          {summary}
         </div>
       </div>
     );

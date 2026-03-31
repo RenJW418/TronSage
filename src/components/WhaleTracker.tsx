@@ -56,7 +56,7 @@ export default function WhaleTracker() {
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch(`/api/whale-tracker?token=${filter}&min=100000`);
+      const res = await fetch(`/api/whale-tracker?token=${filter}&min=5000`);
       const json = await res.json();
       if (json.success) {
         setTxs(json.data);

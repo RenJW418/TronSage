@@ -5,10 +5,10 @@ import { AIAnalysisResponse, X402PaymentProof } from "@/types";
 import PaymentModal from "./PaymentModal";
 
 const PRESET_QUERIES = [
-  { label: "Market Analysis", query: "Provide a comprehensive analysis of current TRON market conditions and outlook", icon: "📊" },
-  { label: "Whale Activity", query: "Analyze the recent whale activity on TRON and what it signals for the market", icon: "🐋" },
-  { label: "DeFi Strategy", query: "What is the optimal DeFi yield strategy on TRON right now given current APYs and risk levels?", icon: "💡" },
-  { label: "Risk Assessment", query: "Assess the current risk environment for TRON DeFi investors", icon: "⚠️" },
+  { label: "市场概览", query: "请对当前 TRON 市场状况进行综合分析，包括价格走势、链上活跃度与未来展望", icon: "📊" },
+  { label: "巨鲸追踪", query: "分析 TRON 链上最近的大额转账行为，以及这些鲸鱼动向对市场的信号意义", icon: "🐋" },
+  { label: "DeFi 策略", query: "基于当前 TRON DeFi 各项目的 APY 与风险水平，给出最优收益策略建议", icon: "💡" },
+  { label: "风险评估", query: "评估当前 TRON DeFi 投资者面临的市场风险环境，包括波动率、流动性与系统性风险", icon: "⚠️" },
 ];
 
 function SignalBar({ type, strength, title, reasoning }: {
@@ -42,7 +42,7 @@ function LoadingDots() {
   return (
     <div className="flex items-center gap-2 text-cyber-cyan font-orbitron text-sm">
       <div className="live-dot" />
-      <span>Analyzing on-chain data</span>
+      <span>正在分析链上数据</span>
       <span className="animate-pulse">...</span>
     </div>
   );
@@ -131,12 +131,12 @@ export default function AIAnalyst() {
           <span className="text-cyber-cyan text-lg mt-0.5">💳</span>
           <div>
             <p className="text-[12px] text-cyber-cyan font-semibold">
-              x402 Micropayment Required
+              x402 微支付费用
             </p>
             <p className="text-[11px] text-cyber-muted mt-0.5">
-              Each AI analysis costs <strong className="text-cyber-text">0.1 USDT</strong>{" "}
-              paid via Bank of AI x402 protocol on TRON. Try{" "}
-              <strong className="text-cyber-cyan">Demo Mode</strong> for free.
+              每次 AI 分析消耗 <strong className="text-cyber-text">0.1 USDT</strong>，
+              通过 Bank of AI x402 协议在 TRON 链上支付。或选择免费的{" "}
+              <strong className="text-cyber-cyan">演示模式</strong>体验。
             </p>
           </div>
         </div>
@@ -164,14 +164,14 @@ export default function AIAnalyst() {
         {/* Query Input */}
         <div className="space-y-3">
           <label className="block font-orbitron text-[10px] font-bold text-cyber-muted tracking-widest uppercase">
-            Your Analysis Query
+            分析问题
           </label>
           <textarea
             className="cyber-input resize-none"
             rows={3}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Ask TronSage AI anything about TRON ecosystem, DeFi strategies, market analysis..."
+            placeholder="用自然语言提问，例如：分析当前 TRON 市场走势和已知风险..."
           />
           <button
             onClick={handleAnalyze}
@@ -185,7 +185,7 @@ export default function AIAnalyst() {
             ) : (
               <>
                 <span>⚡</span>
-                <span>Analyze (0.1 USDT)</span>
+                <span>开始分析 (0.1 USDT)</span>
               </>
             )}
           </button>

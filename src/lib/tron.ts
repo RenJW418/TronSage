@@ -147,10 +147,11 @@ export function formatAmount(amount: number): string {
 export async function fetchTronNetworkStats(): Promise<TronNetworkStats> {
   const timeOffset = Date.now() - 1710000000000;
   try {
-    const [overviewRes, priceRes, binanceRes] = await Promise.allSettled([
+    const [overviewRes, priceRes, binanceRes, geckoRes] = await Promise.allSettled([
       fetch(`${TRONSCAN}/api/index/overview`, { next: { revalidate: 30 } }),
       fetch(`${TRONSCAN}/api/token/price?token=TRX`, { next: { revalidate: 30 } }),
       fetch("https://api.binance.com/api/v3/ticker/24hr?symbol=TRXUSDT", { next: { revalidate: 30 } }),
+      fetch("https://api.coingecko.com/api/v3/simple/price?ids=tron&vs_currencies=usd&include_24hr_change=true", { next: { revalidate: 30 } }),
     ]);
 
     // Defaults
@@ -161,11 +162,18 @@ export async function fetchTronNetworkStats(): Promise<TronNetworkStats> {
     let trxPrice = 0.138;
     let priceChange24h = 2.4;
 
-    // 1. Try Binance for price (Reliable, avoids Tronscan IP blocks)
+    // 1. Try Binance for price (Reliable, avoids TronScan IP blocks)
     if (binanceRes.status === "fulfilled" && binanceRes.value.ok) {
       const bData = await binanceRes.value.json();
       trxPrice = parseFloat(bData.lastPrice) || trxPrice;
       priceChange24h = parseFloat(bData.priceChangePercent) || priceChange24h;
+    } else if (geckoRes.status === "fulfilled" && geckoRes.value.ok) {
+      // 2. CoinGecko fallback
+      const gData = await geckoRes.value.json();
+      if (gData?.tron?.usd) {
+        trxPrice = gData.tron.usd;
+        priceChange24h = gData.tron.usd_24h_change ?? priceChange24h;
+      }
     } else if (priceRes.status === "fulfilled" && priceRes.value.ok) {
       const d = await priceRes.value.json();
       if (d.prices?.["TRX_USDT"]) trxPrice = parseFloat(d.prices["TRX_USDT"]);
